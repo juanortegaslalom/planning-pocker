@@ -4,12 +4,15 @@ A web-based Planning Poker application for agile teams to estimate task complexi
 
 ## Features
 
-- **Anonymous Sessions**: Create and join sessions without signup
-- **Fibonacci Scoring**: Standard 1, 2, 3, 5, 8, 13, 21 point scale
-- **Real-time Collaboration**: Multiple participants can vote simultaneously
-- **Session Management**: Create sessions with optional ticket details
+- **Session Creation**: Create sessions with optional ticket details
 - **Easy Sharing**: Copy session IDs and share links instantly
 - **Responsive Design**: Works on desktop and mobile devices
+
+## Planned Features (In Development)
+
+- **Anonymous Sessions**: Join sessions without signup
+- **Fibonacci Scoring**: Standard 1, 2, 3, 5, 8, 13, 21 point scale
+- **Real-time Collaboration**: Multiple participants can vote simultaneously
 
 ## Getting Started
 
@@ -38,13 +41,16 @@ npm run dev
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Usage
+## Current Usage
 
 1. **Create a Session**: Click "Create New Session" and optionally add ticket details
 2. **Share the Session**: Copy the session ID or share link with your team
-3. **Join the Session**: Team members enter the session ID to join
-4. **Vote**: Select a Fibonacci number to estimate task complexity  
-5. **Reveal**: Session creator can reveal all votes to see results
+
+## Coming Soon
+
+- Join sessions with session ID
+- Fibonacci voting interface  
+- Vote revelation and results
 
 ## Tech Stack
 
