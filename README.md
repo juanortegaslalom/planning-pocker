@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Planning Poker
+
+A web-based Planning Poker application for agile teams to estimate task complexity using Fibonacci scoring. Built with Next.js 15, React 19, and TypeScript.
+
+## Features
+
+- **Session Creation**: Create sessions with optional ticket details
+- **Easy Sharing**: Copy session IDs and share links instantly
+- **Responsive Design**: Works on desktop and mobile devices
+
+## Planned Features (In Development)
+
+- **Anonymous Sessions**: Join sessions without signup
+- **Fibonacci Scoring**: Standard 1, 2, 3, 5, 8, 13, 21 point scale
+- **Real-time Collaboration**: Multiple participants can vote simultaneously
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/juanortegaslalom/planning-pocker.git
+cd planning-pocker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Learn More
+## Current Usage
 
-To learn more about Next.js, take a look at the following resources:
+1. **Create a Session**: Click "Create New Session" and optionally add ticket details
+2. **Share the Session**: Copy the session ID or share link with your team
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Coming Soon
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Join sessions with session ID
+- Fibonacci voting interface  
+- Vote revelation and results
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Framework**: Next.js 15 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **State Management**: In-memory session store
+- **ID Generation**: nanoid for unique session IDs
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Development
+
+### Available Scripts
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+
+### Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── api/sessions/      # API endpoints
+│   ├── create-session/    # Session creation page
+│   └── page.tsx          # Home page
+├── components/            # Reusable UI components (future)
+├── lib/                   # Business logic & utilities
+│   ├── sessionStore.ts   # In-memory session management
+│   └── utils.ts          # Utility functions
+└── types/                # TypeScript type definitions
+    └── index.ts
+```
