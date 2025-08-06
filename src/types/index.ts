@@ -35,6 +35,23 @@ export interface JoinSessionRequest {
   displayName: string;
 }
 
+export interface JoinSessionResponse {
+  sessionId: string;
+  ticketName?: string;
+  ticketNumber?: string;
+  status: string;
+  userId: string;
+  participants: ParticipantResponse[];
+  isCreator: boolean;
+}
+
+export interface ParticipantResponse {
+  userId: string;
+  displayName: string;
+  hasVoted: boolean;
+  joinedAt: string;
+}
+
 export interface VoteRequest {
   sessionId: string;
   userId: string;
