@@ -85,7 +85,6 @@ export interface SessionResults {
   totalParticipants: number;
   average: number;
   consensus: number | null;
-  voteDistribution: Record<number, number>;
   revealed: boolean;
 }
 

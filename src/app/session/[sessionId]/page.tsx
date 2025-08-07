@@ -64,11 +64,6 @@ export default function SessionPage() {
             const average = votes.length > 0 ? votes.reduce((a: number, b: number) => a + b, 0) / votes.length : 0;
             const consensus = votes.length > 0 && votes.every((v: number) => v === votes[0]) ? votes[0] : null;
             
-            const voteDistribution: Record<number, number> = {};
-            votes.forEach((vote: number) => {
-              voteDistribution[vote] = (voteDistribution[vote] || 0) + 1;
-            });
-            
             setRevealedResults({
               sessionId: sessionData.sessionId,
               ticketName: sessionData.ticketName,
@@ -80,7 +75,6 @@ export default function SessionPage() {
                 totalParticipants: sessionData.participants.length,
                 average: Math.round(average * 10) / 10,
                 consensus,
-                voteDistribution,
                 revealed: true
               }
             });

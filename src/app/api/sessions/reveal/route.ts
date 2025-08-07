@@ -52,12 +52,6 @@ export async function POST(request: NextRequest) {
     const average = votes.length > 0 ? calculateAverage(votes) : 0;
     const consensus = votes.length > 0 ? findConsensus(votes) : null;
     
-    // Count votes by value
-    const voteDistribution: Record<number, number> = {};
-    votes.forEach(vote => {
-      voteDistribution[vote] = (voteDistribution[vote] || 0) + 1;
-    });
-
     const response = {
       sessionId: session.sessionId,
       ticketName: session.ticketName,
@@ -69,7 +63,6 @@ export async function POST(request: NextRequest) {
         totalParticipants: participantsList.length,
         average: Math.round(average * 10) / 10, // Round to 1 decimal place
         consensus,
-        voteDistribution,
         revealed: true,
       }
     };

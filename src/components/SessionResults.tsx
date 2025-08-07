@@ -83,59 +83,7 @@ export default function SessionResults({ results, participants }: SessionResults
         </div>
       </div>
 
-      {/* Vote Distribution */}
-      <div>
-        <h4 className="font-semibold mb-3">Vote Distribution</h4>
-        <div className="space-y-2">
-          {Object.entries(results.voteDistribution)
-            .sort(([a], [b]) => parseInt(a) - parseInt(b))
-            .map(([vote, count]) => {
-              const percentage = Math.round((count / results.totalVotes) * 100);
-              return (
-                <div key={vote} className="flex items-center space-x-3">
-                  <div className="w-12 text-center font-medium">{vote}</div>
-                  <div className="flex-1">
-                    <div className="bg-gray-200 dark:bg-gray-600 rounded-full h-6 relative overflow-hidden">
-                      <div 
-                        className="bg-blue-500 h-full rounded-full transition-all duration-500 flex items-center justify-center"
-                        style={{ width: `${percentage}%` }}
-                      >
-                        {percentage > 20 && (
-                          <span className="text-xs text-white font-medium">{count}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-16 text-sm text-gray-600 text-right">
-                    {count} ({percentage}%)
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
 
-      {/* Recommendations */}
-      <div className="border-t pt-4">
-        <h4 className="font-semibold mb-2">📊 Analysis</h4>
-        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-          {results.consensus ? (
-            <p className="text-green-600">✅ Perfect consensus! Everyone agrees on {results.consensus} points.</p>
-          ) : (
-            <p>💬 No consensus reached. Consider discussion and re-voting.</p>
-          )}
-          
-          {results.totalVotes < results.totalParticipants && (
-            <p className="text-orange-600">
-              ⚠️ {results.totalParticipants - results.totalVotes} participant(s) didn&apos;t vote.
-            </p>
-          )}
-          
-          <p>
-            📈 Suggested estimate: <strong>{results.consensus || Math.round(results.average)}</strong> story points
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
