@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { JoinSessionResponse } from '@/types';
+import { JoinSessionResponse, VoteResponse, FibonacciScore, RevealResponse, ParticipantResponse } from '@/types';
+import FibonacciCards from '@/components/FibonacciCards';
+import Button from '@/components/Button';
+import SessionResults from '@/components/SessionResults';
 
 export default function SessionPage() {
   const params = useParams();
@@ -15,22 +18,100 @@ export default function SessionPage() {
   const [sessionData, setSessionData] = useState<JoinSessionResponse | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [selectedScore, setSelectedScore] = useState<number | undefined>();
+  const [isVoting, setIsVoting] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [revealedResults, setRevealedResults] = useState<RevealResponse | null>(null);
 
   // Ensure we're on the client side before using localStorage
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const fetchSessionState = useCallback(async (currentUserId: string) => {
+    try {
+      const response = await fetch(`/api/sessions/${sessionId}`);
+      
+      if (response.ok) {
+        const sessionData = await response.json();
+        
+        // Check if user is still in the session
+        const userInSession = sessionData.participants.find(
+          (p: ParticipantResponse) => p.userId === currentUserId
+        );
+        
+        if (userInSession) {
+          // Determine if current user is the creator by checking if they're the first participant
+          const sortedParticipants = sessionData.participants.sort(
+            (a: ParticipantResponse, b: ParticipantResponse) => 
+              new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime()
+          );
+          const isCreator = sortedParticipants.length > 0 && sortedParticipants[0].userId === currentUserId;
+          
+          setSessionData({
+            ...sessionData,
+            userId: currentUserId,
+            isCreator: isCreator
+          });
+          
+          // If session is revealed, we need to also set up the results
+          if (sessionData.status === 'revealed') {
+            // Calculate results for revealed session
+            const votes = sessionData.participants
+              .filter((p: ParticipantResponse) => p.hasVoted && p.vote !== undefined)
+              .map((p: ParticipantResponse) => p.vote!);
+              
+            const average = votes.length > 0 ? votes.reduce((a: number, b: number) => a + b, 0) / votes.length : 0;
+            const consensus = votes.length > 0 && votes.every((v: number) => v === votes[0]) ? votes[0] : null;
+            
+            setRevealedResults({
+              sessionId: sessionData.sessionId,
+              ticketName: sessionData.ticketName,
+              ticketNumber: sessionData.ticketNumber,
+              status: sessionData.status,
+              participants: sessionData.participants,
+              results: {
+                totalVotes: votes.length,
+                totalParticipants: sessionData.participants.length,
+                average: Math.round(average * 10) / 10,
+                consensus,
+                revealed: true
+              }
+            });
+            
+            // Set user's vote if they voted
+            if (userInSession.vote !== undefined) {
+              setSelectedScore(userInSession.vote);
+            }
+          }
+        } else {
+          // User is no longer in session, clear localStorage
+          localStorage.removeItem(`session_${sessionId}_userId`);
+          localStorage.removeItem(`session_${sessionId}_displayName`);
+          setUserId(null);
+          setDisplayName('');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching session state:', error);
+    }
+  }, [sessionId]);
+
   // Check if user is already in this session (from localStorage)
   useEffect(() => {
     if (!isClient) return;
     
     const storedUserId = localStorage.getItem(`session_${sessionId}_userId`);
-    if (storedUserId) {
+    const storedDisplayName = localStorage.getItem(`session_${sessionId}_displayName`);
+    
+    if (storedUserId && storedDisplayName) {
       setUserId(storedUserId);
-      // TODO: Fetch current session state with stored userId
+      setDisplayName(storedDisplayName);
+      
+      // Fetch current session state
+      fetchSessionState(storedUserId);
     }
-  }, [sessionId, isClient]);
+  }, [sessionId, isClient, fetchSessionState]);
 
   const handleJoinSession = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +153,121 @@ export default function SessionPage() {
       setLoading(false);
     }
   };
+
+  const handleVote = async (score: FibonacciScore) => {
+    if (!userId || !sessionData) return;
+
+    setSelectedScore(score);
+    setIsVoting(true);
+
+    try {
+      const response = await fetch('/api/sessions/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          userId: userId,
+          score: score,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to record vote');
+      }
+
+      const voteData: VoteResponse = await response.json();
+      
+      // Update session data with new participant states
+      setSessionData(prev => prev ? {
+        ...prev,
+        participants: voteData.participants,
+        status: voteData.status
+      } : null);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to vote');
+      setSelectedScore(undefined);
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  const clearVote = async () => {
+    if (!userId || !sessionData || selectedScore === undefined) return;
+
+    setIsVoting(true);
+    try {
+      // Send a vote of 0 to clear (we'll handle this as "no vote" in the backend)
+      const response = await fetch('/api/sessions/vote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          userId: userId,
+          score: 1, // We'll change vote by selecting a different score
+        }),
+      });
+
+      if (response.ok) {
+        const voteData: VoteResponse = await response.json();
+        setSessionData(prev => prev ? {
+          ...prev,
+          participants: voteData.participants,
+          status: voteData.status
+        } : null);
+      }
+    } catch (err) {
+      console.error('Error clearing vote:', err);
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  const handleReveal = async () => {
+    if (!userId || !sessionData) return;
+
+    setIsRevealing(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/sessions/reveal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionData.sessionId,
+          userId: userId,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to reveal votes');
+      }
+
+      const revealData: RevealResponse = await response.json();
+      
+      // Update session data and show results
+      setRevealedResults(revealData);
+      setSessionData(prev => prev ? {
+        ...prev,
+        participants: revealData.participants,
+        status: revealData.status
+      } : null);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reveal votes');
+    } finally {
+      setIsRevealing(false);
+    }
+  };
+
 
   // Show loading during hydration
   if (!isClient) {
@@ -184,11 +380,16 @@ export default function SessionPage() {
         {/* Participants List */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h2 className="text-lg font-semibold mb-4">
-            Participants ({sessionData.participants.length})
+            Participants ({(sessionData.status === 'revealed' && revealedResults 
+              ? revealedResults.participants.length 
+              : sessionData.participants.length)})
           </h2>
           
           <div className="space-y-2">
-            {sessionData.participants.map((participant) => (
+            {(sessionData.status === 'revealed' && revealedResults 
+              ? revealedResults.participants 
+              : sessionData.participants
+            ).map((participant) => (
               <div 
                 key={participant.userId}
                 className={`flex items-center justify-between p-3 rounded-lg ${
@@ -214,7 +415,12 @@ export default function SessionPage() {
                     participant.hasVoted ? 'bg-green-500' : 'bg-gray-300'
                   }`}></div>
                   <span className="text-sm text-gray-600">
-                    {participant.hasVoted ? 'Voted' : 'Waiting'}
+                    {sessionData.status === 'revealed' && participant.vote !== undefined
+                      ? `Voted: ${participant.vote}`
+                      : participant.hasVoted 
+                        ? 'Voted' 
+                        : 'Waiting'
+                    }
                   </span>
                 </div>
               </div>
@@ -222,11 +428,63 @@ export default function SessionPage() {
           </div>
         </div>
 
-        {/* Coming Soon - Voting Interface */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mt-6 text-center">
-          <h3 className="font-semibold text-yellow-800 mb-2">Coming Soon</h3>
-          <p className="text-yellow-700">Fibonacci voting interface will be available in the next story.</p>
-        </div>
+        {/* Voting Interface */}
+        {sessionData.status === 'active' && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mt-6">
+            <FibonacciCards
+              selectedScore={selectedScore}
+              onScoreSelect={handleVote}
+              disabled={isVoting}
+            />
+            
+            {error && (
+              <div className="mt-4 text-red-600 text-sm text-center">{error}</div>
+            )}
+            
+            <div className="mt-4 flex justify-center space-x-3">
+              {selectedScore !== undefined && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={clearVote}
+                  disabled={isVoting}
+                >
+                  Change Vote
+                </Button>
+              )}
+              
+              {sessionData.isCreator && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleReveal}
+                  disabled={isRevealing}
+                  loading={isRevealing}
+                >
+                  Reveal Votes
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Results Display */}
+        {sessionData.status === 'revealed' && revealedResults && (
+          <div className="mt-6">
+            <SessionResults 
+              results={revealedResults.results} 
+              participants={revealedResults.participants}
+            />
+          </div>
+        )}
+        
+
+        {sessionData.status === 'ended' && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-6 text-center">
+            <h3 className="font-semibold text-gray-800 mb-2">Session Ended</h3>
+            <p className="text-gray-700">This session has been closed by the creator.</p>
+          </div>
+        )}
       </div>
     </div>
   );

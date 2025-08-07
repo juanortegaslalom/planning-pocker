@@ -50,6 +50,14 @@ export interface ParticipantResponse {
   displayName: string;
   hasVoted: boolean;
   joinedAt: string;
+  vote?: number; // Only included when session is revealed
+}
+
+export interface VoteResponse {
+  sessionId: string;
+  status: string;
+  participants: ParticipantResponse[];
+  voteRecorded: boolean;
 }
 
 export interface VoteRequest {
@@ -61,6 +69,23 @@ export interface VoteRequest {
 export interface RevealRequest {
   sessionId: string;
   userId: string;
+}
+
+export interface RevealResponse {
+  sessionId: string;
+  ticketName?: string;
+  ticketNumber?: string;
+  status: string;
+  participants: ParticipantResponse[];
+  results: SessionResults;
+}
+
+export interface SessionResults {
+  totalVotes: number;
+  totalParticipants: number;
+  average: number;
+  consensus: number | null;
+  revealed: boolean;
 }
 
 export const FIBONACCI_SCORES = [1, 2, 3, 5, 8, 13, 21] as const;
