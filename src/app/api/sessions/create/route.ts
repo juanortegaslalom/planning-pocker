@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sessionStore } from '@/lib/sessionStore';
+import { dbSessionStore } from '@/lib/dbSessionStore';
 import { CreateSessionRequest, CreateSessionResponse } from '@/types';
 
 export async function POST(request: NextRequest) {
@@ -7,7 +7,7 @@ export async function POST(request: NextRequest) {
     const body: CreateSessionRequest = await request.json();
     const { ticketName, ticketNumber } = body;
 
-    const session = sessionStore.createSession(ticketName, ticketNumber);
+    const session = await dbSessionStore.createSession(ticketName, ticketNumber);
     
     const response: CreateSessionResponse = {
       sessionId: session.sessionId,

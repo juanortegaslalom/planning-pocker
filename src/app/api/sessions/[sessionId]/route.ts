@@ -1,38 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { dbSessionStore } from '@/lib/dbSessionStore';
-import { JoinSessionRequest } from '@/types';
 
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
   try {
-    const body: JoinSessionRequest = await request.json();
-    const { sessionId, displayName } = body;
-
-    // Validate required fields
-    if (!sessionId || !displayName?.trim()) {
+    const { sessionId } = await params;
+    
+    if (!sessionId) {
       return NextResponse.json(
-        { error: 'Session ID and display name are required' },
+        { error: 'Session ID is required' },
         { status: 400 }
       );
     }
 
-    // Attempt to join the session
-    const result = await dbSessionStore.joinSession(sessionId.toUpperCase(), displayName.trim());
-    
-    if (!result) {
+    const session = await dbSessionStore.getSession(sessionId.toUpperCase());
+    if (!session) {
       return NextResponse.json(
-        { error: 'Session not found or has ended' },
+        { error: 'Session not found' },
         { status: 404 }
       );
     }
 
-    const { session, userId } = result;
-    
-    // Convert participants Map to Array for JSON serialization
+    // Convert participants to response format
     const participantsList = Array.from(session.participants.values()).map(participant => ({
       userId: participant.userId,
       displayName: participant.displayName,
       hasVoted: participant.hasVoted,
       joinedAt: participant.joinedAt.toISOString(),
+      // Include vote value only if session is revealed
+      vote: session.status === 'revealed' ? participant.vote : undefined,
     }));
 
     const response = {
@@ -40,16 +35,15 @@ export async function POST(request: NextRequest) {
       ticketName: session.ticketName,
       ticketNumber: session.ticketNumber,
       status: session.status,
-      userId,
       participants: participantsList,
-      isCreator: session.createdBy === userId,
+      createdBy: session.createdBy,
     };
 
     return NextResponse.json(response, { status: 200 });
   } catch (error) {
-    console.error('Error joining session:', error);
+    console.error('Error fetching session:', error);
     return NextResponse.json(
-      { error: 'Failed to join session' },
+      { error: 'Failed to fetch session' },
       { status: 500 }
     );
   }
