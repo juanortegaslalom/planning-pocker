@@ -40,6 +40,11 @@ class SessionStore {
       joinedAt: new Date(),
     };
 
+    // If this is the first participant, make them the creator
+    if (session.participants.size === 0) {
+      session.createdBy = userId;
+    }
+
     session.participants.set(userId, participant);
     return { session, userId };
   }
