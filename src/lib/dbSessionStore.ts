@@ -6,62 +6,85 @@ import { Session, Participant } from '@/types';
 
 class DatabaseSessionStore {
   async createSession(ticketName?: string, ticketNumber?: string): Promise<Session> {
-    const sessionId = generateSessionId();
-    const createdBy = generateUserId();
+    try {
+      const sessionId = generateSessionId();
+      const createdBy = generateUserId();
 
-    await db.insert(sessions).values({
-      sessionId,
-      ticketName,
-      ticketNumber,
-      status: 'active',
-      createdAt: Date.now(),
-      createdBy,
-    });
+      console.log('Creating session with ID:', sessionId);
+      
+      await db.insert(sessions).values({
+        sessionId,
+        ticketName,
+        ticketNumber,
+        status: 'active',
+        createdAt: Date.now(),
+        createdBy,
+      });
 
-    return {
-      sessionId,
-      ticketName,
-      ticketNumber,
-      status: 'active',
-      createdAt: new Date(),
-      createdBy,
-      participants: new Map(),
-    };
+      console.log('Session inserted into database successfully');
+
+      return {
+        sessionId,
+        ticketName,
+        ticketNumber,
+        status: 'active',
+        createdAt: new Date(),
+        createdBy,
+        participants: new Map(),
+      };
+    } catch (error) {
+      console.error('Database error in createSession:', error);
+      throw error;
+    }
   }
 
   async getSession(sessionId: string): Promise<Session | null> {
-    const [session] = await db
-      .select()
-      .from(sessions)
-      .where(eq(sessions.sessionId, sessionId.toUpperCase()));
+    try {
+      console.log('Getting session:', sessionId.toUpperCase());
+      
+      const [session] = await db
+        .select()
+        .from(sessions)
+        .where(eq(sessions.sessionId, sessionId.toUpperCase()));
 
-    if (!session) return null;
+      if (!session) {
+        console.log('Session not found in database:', sessionId.toUpperCase());
+        return null;
+      }
 
-    const sessionParticipants = await db
-      .select()
-      .from(participants)
-      .where(eq(participants.sessionId, sessionId.toUpperCase()));
+      console.log('Session found, getting participants...');
+      
+      const sessionParticipants = await db
+        .select()
+        .from(participants)
+        .where(eq(participants.sessionId, sessionId.toUpperCase()));
 
-    const participantsMap = new Map<string, Participant>();
-    sessionParticipants.forEach(p => {
-      participantsMap.set(p.userId, {
-        userId: p.userId,
-        displayName: p.displayName,
-        vote: p.vote || undefined,
-        hasVoted: p.hasVoted,
-        joinedAt: new Date(p.joinedAt),
+      console.log('Found participants:', sessionParticipants.length);
+
+      const participantsMap = new Map<string, Participant>();
+      sessionParticipants.forEach(p => {
+        participantsMap.set(p.userId, {
+          userId: p.userId,
+          displayName: p.displayName,
+          vote: p.vote || undefined,
+          hasVoted: p.hasVoted,
+          joinedAt: new Date(p.joinedAt),
+        });
       });
-    });
 
-    return {
-      sessionId: session.sessionId,
-      ticketName: session.ticketName || undefined,
-      ticketNumber: session.ticketNumber || undefined,
-      status: session.status as 'active' | 'revealed' | 'ended',
-      createdAt: new Date(session.createdAt),
-      createdBy: session.createdBy,
-      participants: participantsMap,
-    };
+      return {
+        sessionId: session.sessionId,
+        ticketName: session.ticketName || undefined,
+        ticketNumber: session.ticketNumber || undefined,
+        status: session.status as 'active' | 'revealed' | 'ended',
+        createdAt: new Date(session.createdAt),
+        createdBy: session.createdBy,
+        participants: participantsMap,
+      };
+    } catch (error) {
+      console.error('Database error in getSession:', error);
+      throw error;
+    }
   }
 
   async joinSession(sessionId: string, displayName: string): Promise<{ session: Session; userId: string } | null> {
