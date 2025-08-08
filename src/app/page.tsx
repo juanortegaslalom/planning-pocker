@@ -54,7 +54,7 @@ export default function Home() {
         
         <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
           <p>Anonymous sessions • No signup required</p>
-          <p>Fibonacci scale: 1, 2, 3, 5, 8, 13, 21</p>
+          <p>Fibonacci scale: 1, 2, 3, 5, 8, 13</p>
         </div>
       </div>
     </div>
