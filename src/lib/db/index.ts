@@ -51,6 +51,13 @@ console.log(`Using migrations path: ${migrationsPath}`);
 console.log(`Current working directory: ${process.cwd()}`);
 console.log(`__dirname: ${__dirname}`);
 
+// Ensure the database directory exists (crucial for Azure)
+const dbDir = path.dirname(dbPath);
+if (!fs.existsSync(dbDir)) {
+  console.log(`Creating database directory: ${dbDir}`);
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
 const sqlite = new Database(dbPath);
 export const db = drizzle(sqlite, { schema });
 
