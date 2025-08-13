@@ -11,7 +11,8 @@ let migrationsPath: string;
 
 if (process.env.NODE_ENV === 'production') {
   // Azure Web Apps - use a writeable directory
-  dbPath = process.env.DATABASE_PATH || path.join(process.env.HOME || '/tmp', 'planning_poker.db');
+  // Azure provides /home as a persistent storage location
+  dbPath = process.env.DATABASE_PATH || '/home/planning_poker.db';
   
   // Try multiple possible migration paths for production
   const possiblePaths = [
