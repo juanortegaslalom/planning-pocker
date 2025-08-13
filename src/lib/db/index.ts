@@ -9,7 +9,11 @@ import fs from 'fs';
 let dbPath: string;
 let migrationsPath: string;
 
-if (process.env.NODE_ENV === 'production') {
+// During build, Next.js sets NODE_ENV to production but we're not actually running in Azure
+const isAzureRuntime = process.env.NODE_ENV === 'production' && 
+                       (process.env.WEBSITE_SITE_NAME || process.env.AZURE_FUNCTIONS_ENVIRONMENT);
+
+if (isAzureRuntime) {
   // Azure Web Apps - use a writeable directory
   // Azure provides /home as a persistent storage location
   dbPath = process.env.DATABASE_PATH || '/home/planning_poker.db';
@@ -37,7 +41,7 @@ if (process.env.NODE_ENV === 'production') {
   console.log('Checking migration paths:', possiblePaths);
   console.log('Found migration path:', migrationsPath);
 } else {
-  // Development
+  // Development or build time
   dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'planning_poker.db');
   migrationsPath = path.join(process.cwd(), 'drizzle');
 }
@@ -58,8 +62,8 @@ try {
   if (!fs.existsSync(migrationsPath)) {
     console.error(`Migration folder does not exist at: ${migrationsPath}`);
     
-    // In production, create tables directly if migrations are not found
-    if (process.env.NODE_ENV === 'production') {
+    // In Azure runtime, create tables directly if migrations are not found
+    if (isAzureRuntime) {
       console.log('Creating tables directly without migrations...');
       
       // Create sessions table
@@ -99,7 +103,7 @@ try {
   console.error('Error during database setup:', error);
   
   // Last resort: create tables directly
-  if (process.env.NODE_ENV === 'production') {
+  if (isAzureRuntime) {
     try {
       console.log('Attempting to create tables directly as fallback...');
       
