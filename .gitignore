@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Claude Code configuration (local only)
 CLAUDE.md
+.claude/
+*.claude
+claude.config.*
