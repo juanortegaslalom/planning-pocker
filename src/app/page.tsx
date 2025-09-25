@@ -52,7 +52,16 @@ export default function Home() {
           </form>
         </div>
         
-        <div className="mt-8 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-6">
+          <Link
+            href="/history"
+            className="text-blue-600 hover:text-blue-800 underline text-sm"
+          >
+            View Voting History →
+          </Link>
+        </div>
+        
+        <div className="mt-6 text-xs text-gray-500 dark:text-gray-400">
           <p>Anonymous sessions • No signup required</p>
           <p>Fibonacci scale: 1, 2, 3, 5, 8, 13</p>
         </div>

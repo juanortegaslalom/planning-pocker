@@ -516,7 +516,13 @@ export default function SessionPage() {
         {sessionData.status === 'ended' && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mt-6 text-center">
             <h3 className="font-semibold text-gray-800 mb-2">Session Ended</h3>
-            <p className="text-gray-700">This session has been closed by the creator.</p>
+            <p className="text-gray-700 mb-3">This session has been closed by the creator.</p>
+            <a
+              href="/history"
+              className="text-blue-600 hover:text-blue-800 underline text-sm"
+            >
+              View in History →
+            </a>
           </div>
         )}
       </div>

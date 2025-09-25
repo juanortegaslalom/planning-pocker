@@ -8,6 +8,8 @@ export const sessions = sqliteTable('sessions', {
   status: text('status').notNull().default('active'), // 'active', 'revealed', 'ended'
   createdAt: real('created_at').notNull().$defaultFn(() => Date.now()),
   createdBy: text('created_by').notNull(),
+  revealedAt: real('revealed_at'),
+  endedAt: real('ended_at'),
 });
 
 export const participants = sqliteTable('participants', {

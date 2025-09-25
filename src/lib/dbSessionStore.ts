@@ -1,6 +1,6 @@
 import { db } from './db';
 import { sessions, participants } from './db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or, desc } from 'drizzle-orm';
 import { generateSessionId, generateUserId } from './utils';
 import { Session, Participant } from '@/types';
 
@@ -152,7 +152,10 @@ class DatabaseSessionStore {
 
     await db
       .update(sessions)
-      .set({ status: 'revealed' })
+      .set({ 
+        status: 'revealed',
+        revealedAt: Date.now() 
+      })
       .where(eq(sessions.sessionId, sessionId.toUpperCase()));
 
     return true;
@@ -166,7 +169,10 @@ class DatabaseSessionStore {
 
     await db
       .update(sessions)
-      .set({ status: 'ended' })
+      .set({ 
+        status: 'ended',
+        endedAt: Date.now() 
+      })
       .where(eq(sessions.sessionId, sessionId.toUpperCase()));
 
     return true;
@@ -212,6 +218,24 @@ class DatabaseSessionStore {
 
     const result: Session[] = [];
     for (const session of endedSessions) {
+      const fullSession = await this.getSession(session.sessionId);
+      if (fullSession) {
+        result.push(fullSession);
+      }
+    }
+
+    return result;
+  }
+
+  async getSessionHistory(): Promise<Session[]> {
+    const historySessions = await db
+      .select()
+      .from(sessions)
+      .where(or(eq(sessions.status, 'revealed'), eq(sessions.status, 'ended')))
+      .orderBy(desc(sessions.revealedAt), desc(sessions.endedAt), desc(sessions.createdAt));
+
+    const result: Session[] = [];
+    for (const session of historySessions) {
       const fullSession = await this.getSession(session.sessionId);
       if (fullSession) {
         result.push(fullSession);

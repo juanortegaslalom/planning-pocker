@@ -8,6 +8,13 @@
       "when": 1754524937544,
       "tag": "0000_wandering_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1758818087881,
+      "tag": "0001_special_warbird",
+      "breakpoints": true
     }
   ]
 }
